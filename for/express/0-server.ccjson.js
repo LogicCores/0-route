@@ -17,13 +17,12 @@ exports.forLib = function (LIB) {
                 if (config.namespace) {
                     // Keep record of the route by namespace so we can fetch it later.
                     if (!routesByNamespace[config.namespace]) {
-                        routesByNamespace[config.namespace] = [];
+                        routesByNamespace[config.namespace] = {};
                     }
-                    routesByNamespace[config.namespace].push(self);
+                    routesByNamespace[config.namespace][instanceConfig["$alias"]] = self;
 
                     self.match = config.match;
                     self.app = config.impl;
-
                 } else
                 if (
                     config.routes &&
@@ -31,16 +30,31 @@ exports.forLib = function (LIB) {
                 ) {
                     // Enable fetching of routes for given namespace.
                     self.AspectInstance = function (aspectConfig) {
-    
+
+                        function routes () {
+                            if (!routesByNamespace[config.routes.namespace]) {
+                                throw new Error("No routes found for namsepace '" + config.routes.namespace + "'");
+                            }
+                            // We order the routes based on the sequence in which
+                            // they were declared.
+                            return Entity.prototype["@instances.order"].filter(function (instanceAlias) {
+                                return !!routesByNamespace[config.routes.namespace][instanceAlias];
+                            }).map(function (instanceAlias) {
+                                return routesByNamespace[config.routes.namespace][instanceAlias];
+                            });
+                        }
+
                         return LIB.Promise.resolve({
                             routes: function () {
                                 return LIB.Promise.resolve(
                                     ccjson.makeDetachedFunction(
                                         function () {
-                                            if (!routesByNamespace[config.routes.namespace]) {
-                                                throw new Error("No routes found for namsepace '" + config.routes.namespace + "'");
-                                            }
-                                            return routesByNamespace[config.routes.namespace];
+                                            var config = {};
+                                            LIB._.merge(config, aspectConfig);
+                                            LIB._.assign(config, {
+                                                routes: routes()
+                                            });
+                                            return config;
                                         }
                                     )
                                 );
