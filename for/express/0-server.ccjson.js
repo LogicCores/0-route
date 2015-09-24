@@ -23,6 +23,7 @@ exports.forLib = function (LIB) {
 
                     self.match = config.match;
                     self.app = config.impl;
+                    self.methods = config.methods || [ "GET" ];
                 } else
                 if (
                     config.routes &&
