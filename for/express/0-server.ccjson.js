@@ -1,6 +1,8 @@
 
 exports.forLib = function (LIB) {
     var ccjson = this;
+    
+    const VERBOSE = !!process.env.VERBOSE;
 
     return LIB.Promise.resolve({
         forConfig: function (defaultConfig) {
@@ -24,6 +26,8 @@ exports.forLib = function (LIB) {
                     self.match = config.match;
                     self.app = config.impl;
                     self.methods = config.methods || [ "GET" ];
+
+//                    if (VERBOSE) console.log("Register route:", config.namespace, self.match);
                 } else
                 if (
                     config.routes &&
@@ -33,9 +37,11 @@ exports.forLib = function (LIB) {
                     self.AspectInstance = function (aspectConfig) {
 
                         function routes () {
+
                             if (!routesByNamespace[config.routes.namespace]) {
                                 throw new Error("No routes found for namsepace '" + config.routes.namespace + "'");
                             }
+
                             // We order the routes based on the sequence in which
                             // they were declared.
                             return Entity.prototype["@instances.order"].filter(function (instanceAlias) {
@@ -50,12 +56,15 @@ exports.forLib = function (LIB) {
                                 return LIB.Promise.resolve(
                                     ccjson.makeDetachedFunction(
                                         function () {
-                                            var config = {};
-                                            LIB._.merge(config, aspectConfig);
-                                            LIB._.assign(config, {
+
+                                            var info = {};
+                                            LIB._.merge(info, aspectConfig);
+                                            LIB._.assign(info, {
                                                 routes: routes()
                                             });
-                                            return config;
+                                            
+//                                            if (VERBOSE) console.log("Routes info:", info);
+                                            return info;
                                         }
                                     )
                                 );
