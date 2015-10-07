@@ -24,7 +24,12 @@ exports.forLib = function (LIB) {
                     routesByNamespace[config.namespace][instanceConfig["$alias"]] = self;
 
                     self.match = config.match;
-                    self.app = config.impl;
+                    
+                    if (config.impl) {
+                        self.app = config.impl;
+                    } else {
+                        self.apps = config.impls;
+                    }
                     self.methods = config.methods || [ "GET" ];
 
 //                    if (VERBOSE) console.log("Register route:", config.namespace, self.match);
